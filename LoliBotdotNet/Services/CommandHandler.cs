@@ -9,8 +9,11 @@ using System.Text.RegularExpressions;
 using Discord;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
-namespace LoliBotdotNET.Services
+namespace LoliBotdotNet.Services
 {
     public class CommandHandler
     {
@@ -39,7 +42,6 @@ namespace LoliBotdotNET.Services
                 services: _services);
             _client.MessageReceived += HandleCommandAsync;
         }
-
         private async Task HandleCommandAsync(SocketMessage msg)
         {
             //Don't process the command if it was a system message
@@ -51,6 +53,16 @@ namespace LoliBotdotNET.Services
             char prefix = Char.Parse(_config["prefix"]);
             string pattern = @"\(\s*(\d{5,})\s*(\d+)?\s*\)";
             MatchCollection matches = Regex.Matches(message.Content, pattern);
+
+            //delete messages containing banned words
+            foreach (String word in _config["banned_words"].Split(' '))
+            {
+                if (message.Content.Contains(word))
+                {
+                    await message.DeleteAsync();
+                    return;
+                }
+            }
 
             //make sure no bots trigger commands
             if (message.Author.IsBot) return;
@@ -111,6 +123,7 @@ namespace LoliBotdotNET.Services
                                 await msg.Channel.SendMessageAsync(text: $"There was a error fetching '{ID}'");
                             }
                         }
+
                     }
                 }
                 else return;

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace LoliBotdotNET.Modules
+namespace LoliBotdotNet.Modules
 {
     //Module for Fun Commands
     [Summary("Fun")]
@@ -96,14 +96,14 @@ namespace LoliBotdotNET.Modules
 
         [Command("russianroulette")]
         [Alias("roulette")]
-        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireBotPermission(GuildPermission.KickMembers)]
         [Summary("Play a game of russian roulette where the punishment is getting kicked.")]
         [Remarks("Start a game of russian roulette with a specied number of bullets in the chamber. If you lose, you get kicked. Bullet count cannot negative, zero, or greater than five.")]
         public async Task RouletteCommand(long bullets)
         {
             long bulletCount = bullets;
             if (bullets > 5) bulletCount = 5;
-            if (bullets < 0) bulletCount = 0;
+            if (bullets <= 0) bulletCount = 1;
             bool win = new Random().Next(6) <= bulletCount - 1;
             if (win)
             {
@@ -115,15 +115,6 @@ namespace LoliBotdotNET.Modules
                 
             }
             else await Context.Channel.SendMessageAsync(text: $"loser");
-        }
-
-        [Command("guacamole")]
-        [Alias("guac")]
-        [Summary("Tell Aiden what he has.")]
-        [Remarks("Tell Aiden he has a guacamole nigga penis.")]
-        public async Task GuacamoleCommand()
-        {
-            await Context.Channel.SendMessageAsync(text: $"<@!{304378402788605962}> you have a guacamole nigga penis");
         }
 
         [Command("cocaina")]

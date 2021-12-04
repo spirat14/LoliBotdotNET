@@ -9,8 +9,13 @@ using System.Linq;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using System.Reflection;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using LoliBotdotNet.DataObjects;
 
-namespace LoliBotdotNET.Modules
+namespace LoliBotdotNet.Modules
 {
     //Module for Utility Commands
     [Summary("Utility")]
@@ -35,7 +40,6 @@ namespace LoliBotdotNET.Modules
             {
                 //Generic help command information
                 embed.AddField("LoliBot Help", $"For help with a specific command, type {_config["prefix"]}help [command]");
-
 
                 //Loop through each module to search for and list commands
                 foreach (ModuleInfo module in _command.Modules)
@@ -81,9 +85,11 @@ namespace LoliBotdotNET.Modules
                         {
                             string optional = "";
                             string remainder = "";
+                            string aliases = "";
+                            if (result.Commands[0].Command.Aliases.Count != 0) aliases = String.Concat("(Aliases: ", String.Join(", ", result.Commands[0].Command.Aliases.SkipWhile(alias => alias.Equals(result.Commands[0].Command.Name))), ")");
                             if (result.Commands[0].Command.Parameters[i].IsOptional) optional = "(Optional) ";
                             if (result.Commands[0].Command.Parameters[i].IsRemainder) remainder = "(Remainder) ";
-                            paramString += $" [{optional}{remainder}{result.Commands[0].Command.Parameters[i].Name}]";
+                            paramString += $" [{optional}{remainder}{result.Commands[0].Command.Parameters[i].Name}] {aliases}";
                         }
                         //Add the example input string to the reply embed and send it
                         embed.AddField($"{_config["prefix"]}{result.Commands[0].Command.Name}{paramString}", $"{result.Commands[0].Command.Remarks}");
@@ -106,7 +112,7 @@ namespace LoliBotdotNET.Modules
         [Remarks("Ban the specified user with the specified reason")]
         public async Task BanCommand(string user, [Remainder] string reason = null)
         {
-            string pattern = @"<@!(\d+)>";
+            string pattern = @"<@!?(\d+)>";
             MatchCollection matches = Regex.Matches(user, pattern);
             bool success = UInt64.TryParse(matches[0].Groups[1].Value, out ulong snowflake);
 
@@ -157,7 +163,7 @@ namespace LoliBotdotNET.Modules
         [Remarks("Unban the specified user")]
         public async Task UnbanCommand(string user)
         {
-            string pattern = @"<@!(\d+)>";
+            string pattern = @"<@!?(\d+)>";
             MatchCollection matches = Regex.Matches(user, pattern);
             bool success = UInt64.TryParse(matches[0].Groups[1].Value, out ulong snowflake);
 
@@ -176,7 +182,7 @@ namespace LoliBotdotNET.Modules
         [Remarks("Kick the specified user with the specified reason")]
         public async Task KickCommand(string user, [Remainder] string reason = null)
         {
-            string pattern = @"<@!(\d+)>";
+            string pattern = @"<@!?(\d+)>";
             MatchCollection matches = Regex.Matches(user, pattern);
             bool success = UInt64.TryParse(matches[0].Groups[1].Value, out ulong snowflake);
 
@@ -224,7 +230,7 @@ namespace LoliBotdotNET.Modules
         [Remarks("Add or remove the specified role for the specified user")]
         public async Task AddRoleCommand(string user, string role)
         {
-            MatchCollection userMatches = Regex.Matches(user, @"<@!(\d+)>");
+            MatchCollection userMatches = Regex.Matches(user, @"<@!?(\d+)>");
             MatchCollection roleMatches = Regex.Matches(role, @"<@&(\d+)>");
             bool successUser = UInt64.TryParse(userMatches[0].Groups[1].Value, out ulong userSnowflake);
             bool successRole = UInt64.TryParse(roleMatches[0].Groups[1].Value, out ulong roleSnowflake);
@@ -276,10 +282,19 @@ namespace LoliBotdotNET.Modules
         [Remarks("Evaluate the specified line of code and return the result")]
         public async Task EvalCommand([Remainder] string code)
         {
-
-            string assemblyCode = "namespace Foo { public class Bar { public object evalMethod() { return " + code + "; } } }";
+            /*string assemblyCode;
+            if (!code.Contains('\n'))
+            {
+                assemblyCode = "namespace LoliBotdotNet.Modules { public class Bar { public object evalMethod(Discord.Commands.SocketCommandContext Context) { return " + code + "; } } }";
+            }
+            else
+            {
+                string[] scripts = code.Split('\n');
+                string scriptString = String.Join("; ", scripts);
+                assemblyCode = "using Discord; using Discord.Commands; namespace LoliBotdotNet.Modules { public class Bar { public object evalMethod(Discord.Commands.SocketCommandContext Context) { " + scriptString + " } } }";
+            }
             CSharpCodeProvider provider = new CSharpCodeProvider();
-            CompilerParameters cp = new CompilerParameters() { GenerateExecutable = false, GenerateInMemory = true };
+            CompilerParameters cp = new CompilerParameters() { GenerateExecutable = false, GenerateInMemory = true, };
             CompilerResults cr = provider.CompileAssemblyFromSource(cp, assemblyCode);
             provider.Dispose();
 
@@ -293,11 +308,19 @@ namespace LoliBotdotNET.Modules
             }
             else
             {
-                object o = cr.CompiledAssembly.CreateInstance("Foo.Bar");
+                object o = cr.CompiledAssembly.CreateInstance("LoliBotdotNet.Modules.Bar");
                 MethodInfo mi = o.GetType().GetMethod("evalMethod");
-                object methodInvoke = mi.Invoke(o, null);
+                object methodInvoke = mi.Invoke(o, new object[] { Context });
                 await Context.Channel.SendMessageAsync(text: $"```{methodInvoke.ToString()}```");
+            }*/
+            SocketCommandContext c = Context;
+            var result = await CSharpScript.EvaluateAsync(code, globals: new Globals { Context = Context });
+            if (result == null)
+            {
+                await Context.Channel.SendMessageAsync(text: $"```null```");
+                return;
             }
+            await Context.Channel.SendMessageAsync(text: $"```{(result.GetType().Equals(typeof(Exception)) ? new Exception(result.ToString()).Message : result.ToString())}```");
         }
 
         [Command("purge")]

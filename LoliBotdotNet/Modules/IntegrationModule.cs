@@ -5,13 +5,13 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using LoliBotdotNET.Services;
+using LoliBotdotNet.Services;
 using System.Net;
 using System.Linq;
 using Reddit;
 using Reddit.Inputs.Search;
 
-namespace LoliBotdotNET.Modules
+namespace LoliBotdotNet.Modules
 {
     [Summary("Integration Commands")]
     [RequireBotPermission(ChannelPermission.EmbedLinks)]

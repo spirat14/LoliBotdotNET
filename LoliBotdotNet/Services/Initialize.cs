@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace LoliBotdotNET.Services
+namespace LoliBotdotNet.Services
 {
     public class Initialize
     {

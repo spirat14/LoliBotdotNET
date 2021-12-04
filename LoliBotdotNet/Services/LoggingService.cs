@@ -6,7 +6,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 
-namespace LoliBotdotNET.Services
+namespace LoliBotdotNet.Services
 {
     public class LoggingService
     {

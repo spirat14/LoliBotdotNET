@@ -4,7 +4,7 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using LoliBotdotNET.Services;
+using LoliBotdotNet.Services;
 using Discord.Commands;
 
 namespace LoliBotdotNET
@@ -32,10 +32,10 @@ namespace LoliBotdotNET
             {
                 MessageCacheSize = 100,
                 ExclusiveBulkDelete = true,
+                AlwaysDownloadUsers = true,
                 
             };
             _client = new DiscordSocketClient(_clientConfig);
-
             //Initialize the command service
             var _commandConfig = new CommandServiceConfig
             {

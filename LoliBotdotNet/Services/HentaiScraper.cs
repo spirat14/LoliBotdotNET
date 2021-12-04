@@ -9,7 +9,7 @@ using IronWebScraper;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace LoliBotdotNET.Services
+namespace LoliBotdotNet.Services
 {
     public class HentaiScraper : WebScraper
     {
@@ -57,14 +57,17 @@ namespace LoliBotdotNET.Services
             string decodedJsonString = Regex.Unescape(encodedJsonString);
             JObject json = JObject.Parse(decodedJsonString);
             string mediaID = json.Value<string>("media_id");
-
-            if (this.page != 0) this.results.Add("imageURL", $"https://i.nhentai.net/galleries/{mediaID}/{this.page}.jpg");
+            if (this.page != 0)
+            {
+                String imageUrl = response.GetElementsByTagName("img").Last().GetAttribute("src");
+                this.results.Add("imageURL", imageUrl);
+            }
             else
             {
                 this.results.Add("title", json.Value<JToken>("title").Value<string>("english"));
                 this.results.Add("numPages", json.Value<string>("num_pages"));
                 this.results.Add("uploadTime", response.GetElementsByTagName("time").First().TextContent);
-                if (this.page == 0) this.results.Add("imageURL", $"https://t.nhentai.net/galleries/{mediaID}/cover.jpg");
+                if (this.page == 0) this.results.Add("imageURL", response.GetElementsByTagName("div").Where((node) => node.GetAttribute("id") == "cover").First().GetElementsByTagName("img").First().GetAttribute("data-src"));
 
                 Dictionary<string, string> tagList = new Dictionary<string, string>();
                 tagList.Add("Tags", " ");
